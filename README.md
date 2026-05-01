@@ -125,6 +125,7 @@ docker-compose exec payment-app ./vendor/bin/pest
 
 ## 📄 Documentação Técnica
 
-*   [**Arquitetura Detalhada**](./docs/architecture.md) (Diagramas Mermaid)
+*   [**Arquitetura Detalhada**](./docs/architecture.md) (Diagramas Mermaid e Fluxo Saga)
 *   [**Dicionário de Eventos**](./docs/events.md) (Contratos e Payloads)
-*   [**ADRs**](./docs/adrs) (Registro de Decisões Técnicas)
+*   [**Guia de Testes**](./docs/testing.md) (Como rodar e padrões adotados)
+*   [**ADRs (Architecture Decision Records)**](./docs/adrs) (Kafka, Bancos Isolados, Padronização de API, Pest)
