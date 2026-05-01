@@ -128,5 +128,5 @@ A pasta [`/docs`](./docs) contém:
 
 *   [**Arquitetura**](./docs/architecture.md) (Diagramas e fluxo Saga)
 *   [**Dicionário de Eventos**](./docs/events.md) (Contratos e Payloads)
-*   [**ADRs (Architecture Decision Records)**](./docs/adrs) (Registro de decisões técnicas)
+*   [**ADRs (Architecture Decision Records)**](./docs/adrs) (Registro de decisões técnicas: Kafka, Bancos Isolados, Padronização de API)
 
