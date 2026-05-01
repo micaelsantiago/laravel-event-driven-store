@@ -57,6 +57,22 @@ services:
     networks:
       - store-network
 
+  inventory-consumer:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: inventory-consumer
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./services/inventory-service:/var/www
+    command: php artisan kafka:consume-orders
+    networks:
+      - store-network
+    depends_on:
+      - inventory-app
+      - kafka
+
   inventory-nginx:
     image: nginx:alpine
     container_name: inventory-nginx
