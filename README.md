@@ -124,8 +124,9 @@ O projeto pode ser testado utilizando:
 
 ## 📄 Documentação adicional
 
-A pasta `/docs` contém:
+A pasta [`/docs`](./docs) contém:
 
-* Diagramas de arquitetura
-* Fluxo de eventos detalhado
-* Decisões técnicas (ADR)
+*   [**Arquitetura**](./docs/architecture.md) (Diagramas e fluxo Saga)
+*   [**Dicionário de Eventos**](./docs/events.md) (Contratos e Payloads)
+*   [**ADRs (Architecture Decision Records)**](./docs/adrs) (Registro de decisões técnicas)
+
