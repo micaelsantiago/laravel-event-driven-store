@@ -1,8 +1,13 @@
 <?php
 
+use App\Http\Middleware\ForceJsonResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,8 +17,44 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->prepend(ForceJsonResponse::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
+            return true;
+        });
+
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Resource not found.',
+            ], 404);
+        });
+
+        $exceptions->render(function (MethodNotAllowedHttpException $e, Request $request) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Method not allowed.',
+                'details' => [
+                    'allowed_methods' => $e->getHeaders()['Allow'] ?? []
+                ]
+            ], 405);
+        });
+
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed.',
+                'details' => $e->errors(),
+            ], 422);
+        });
+
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => config('app.debug') ? $e->getMessage() : 'An unexpected error occurred.',
+                ], 500);
+            }
+        });
     })->create();

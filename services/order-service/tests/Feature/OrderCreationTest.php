@@ -23,9 +23,13 @@ it('can create an order and publish a kafka event', function () {
     $response = $this->postJson('/api/orders', $payload);
 
     $response->assertStatus(201)
-        ->assertJsonStructure(['message', 'order_id', 'status']);
+        ->assertJsonStructure([
+            'status',
+            'message',
+            'data' => ['order_id', 'status']
+        ]);
 
-    $orderId = $response->json('order_id');
+    $orderId = $response->json('data.order_id');
 
     // Verify database
     $this->assertDatabaseHas('orders', [

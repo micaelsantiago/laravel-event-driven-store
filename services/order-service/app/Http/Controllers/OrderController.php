@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Junges\Kafka\Facades\Kafka;
@@ -10,6 +11,8 @@ use Junges\Kafka\Message\Message;
 
 class OrderController extends Controller
 {
+    use ApiResponse;
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -53,10 +56,9 @@ class OrderController extends Controller
             ->withMessage($message)
             ->send();
 
-        return response()->json([
-            'message' => 'Order created successfully',
+        return $this->successResponse([
             'order_id' => $order->id,
             'status' => $order->status,
-        ], 201);
+        ], 'Order created successfully', 201);
     }
 }
