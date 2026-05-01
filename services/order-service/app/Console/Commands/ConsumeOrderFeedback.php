@@ -18,6 +18,7 @@ class ConsumeOrderFeedback extends Command
         $consumer = Kafka::consumer(['inventory.failed', 'payment.approved', 'payment.failed'])
             ->withConsumerGroupId('order-service-feedback')
             ->withHandler(new OrderFeedbackConsumer())
+            ->withOption('auto.offset.reset', 'earliest')
             ->build();
 
         $consumer->consume();

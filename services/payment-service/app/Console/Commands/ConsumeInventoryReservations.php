@@ -18,6 +18,7 @@ class ConsumeInventoryReservations extends Command
         $consumer = Kafka::consumer(['inventory.reserved'])
             ->withConsumerGroupId('payment-service-reservations')
             ->withHandler(new InventoryReservedConsumer())
+            ->withOption('auto.offset.reset', 'earliest')
             ->build();
 
         $consumer->consume();

@@ -18,6 +18,7 @@ class ConsumeOrderCreated extends Command
         $consumer = Kafka::consumer(['order.created'])
             ->withConsumerGroupId('inventory-service-orders')
             ->withHandler(new OrderCreatedConsumer())
+            ->withOption('auto.offset.reset', 'earliest')
             ->build();
 
         $consumer->consume();
