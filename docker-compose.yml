@@ -14,6 +14,22 @@ services:
     networks:
       - store-network
 
+  order-consumer:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: order-consumer
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./services/order-service:/var/www
+    command: php artisan kafka:consume-feedback
+    networks:
+      - store-network
+    depends_on:
+      - order-app
+      - kafka
+
   order-nginx:
     image: nginx:alpine
     container_name: order-nginx
@@ -110,7 +126,7 @@ services:
       - store-network
 
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:7.4.0
     container_name: store-kafka
     depends_on:
       - zookeeper
