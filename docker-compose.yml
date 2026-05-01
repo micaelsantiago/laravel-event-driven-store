@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # Order Service
+  order-app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: order-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./services/order-service:/var/www
+    networks:
+      - store-network
+
+  order-nginx:
+    image: nginx:alpine
+    container_name: order-nginx
+    restart: unless-stopped
+    ports:
+      - "8001:80"
+    volumes:
+      - ./services/order-service:/var/www
+      - ./docker/nginx/conf.d/order.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - store-network
+    depends_on:
+      - order-app
+
+  # Inventory Service
+  inventory-app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: inventory-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./services/inventory-service:/var/www
+    networks:
+      - store-network
+
+  inventory-nginx:
+    image: nginx:alpine
+    container_name: inventory-nginx
+    restart: unless-stopped
+    ports:
+      - "8002:80"
+    volumes:
+      - ./services/inventory-service:/var/www
+      - ./docker/nginx/conf.d/inventory.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - store-network
+    depends_on:
+      - inventory-app
+
+  # Payment Service
+  payment-app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: payment-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./services/payment-service:/var/www
+    networks:
+      - store-network
+
+  payment-nginx:
+    image: nginx:alpine
+    container_name: payment-nginx
+    restart: unless-stopped
+    ports:
+      - "8003:80"
+    volumes:
+      - ./services/payment-service:/var/www
+      - ./docker/nginx/conf.d/payment.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - store-network
+    depends_on:
+      - payment-app
+
+  # Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: store-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: sail
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: default_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - store-network
+
+  # Messaging (Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: store-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - store-network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: store-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - store-network
+
+networks:
+  store-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
