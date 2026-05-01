@@ -100,6 +100,22 @@ services:
     networks:
       - store-network
 
+  payment-consumer:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: payment-consumer
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./services/payment-service:/var/www
+    command: php artisan kafka:consume-reservations
+    networks:
+      - store-network
+    depends_on:
+      - payment-app
+      - kafka
+
   payment-nginx:
     image: nginx:alpine
     container_name: payment-nginx
