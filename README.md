@@ -1,132 +1,130 @@
 # 🛒 Laravel Event-Driven Store
 
-Projeto de arquitetura de microsserviços orientada a eventos utilizando Laravel, mensageria e containerização com Docker.
+Projeto de arquitetura de microsserviços orientada a eventos utilizando Laravel, mensageria com Apache Kafka e containerização com Docker.
 
-A aplicação simula uma loja simples onde os serviços são desacoplados e se comunicam exclusivamente por eventos, seguindo boas práticas de sistemas distribuídos.
+A aplicação simula uma loja robusta onde os serviços são desacoplados e se comunicam exclusivamente por eventos, seguindo o padrão **Saga (Coreografada)** para garantir a consistência eventual.
 
 ---
 
 ## 🧠 Arquitetura
 
-O sistema é dividido em três microsserviços independentes:
+O sistema é dividido em três microsserviços independentes, cada um com seu próprio banco de dados isolado (**Database per Service**):
 
-* **Order Service** → responsável pela criação de pedidos
-* **Inventory Service** → responsável pela gestão de estoque
-* **Payment Service** → responsável pelo processamento de pagamentos
+*   **Order Service** (Port 8001) → Criação de pedidos e orquestração do status final.
+*   **Inventory Service** (Port 8002) → Gestão de estoque e reserva de itens.
+*   **Payment Service** (Port 8003) → Processamento de pagamentos e validação financeira.
 
-### 🔄 Fluxo de eventos
+### 🔄 Fluxo de Eventos (Saga)
 
-1. Um pedido é criado (`OrderCreated`)
-2. O serviço de estoque consome o evento e reserva os itens
-3. Um novo evento é emitido (`InventoryReserved` ou `InventoryFailed`)
-4. O serviço de pagamento processa a transação
-5. Evento final: `PaymentApproved` ou `PaymentFailed`
-
----
-
-## 🧱 Tecnologias utilizadas
-
-* Laravel (PHP)
-* Docker
-* Kafka (mensageria orientada a eventos)
-* MySQL / PostgreSQL
-* PHPUnit (testes)
+1.  **Pedido Criado**: O Order Service emite `order.created`.
+2.  **Reserva de Estoque**: O Inventory Service consome o evento, valida o estoque e emite `inventory.reserved` (ou `inventory.failed`).
+3.  **Pagamento**: O Payment Service consome a reserva, processa a transação e emite `payment.approved` (ou `payment.failed`).
+4.  **Finalização**: O Order Service consome o resultado final e atualiza o pedido para `COMPLETED` ou `CANCELLED`.
 
 ---
 
-## 📦 Estrutura do projeto
+## 🧱 Tecnologias Utilizadas
 
-```
-laravel-event-driven-store/
-│
-├── services/
-│   ├── order-service/
-│   ├── inventory-service/
-│   └── payment-service/
-│
-├── docker/
-├── docker-compose.yml
-├── docs/
-└── README.md
-```
+*   **Laravel 11+** (PHP 8.3)
+*   **Apache Kafka** (Broker de eventos)
+*   **PostgreSQL** (Bancos de dados isolados para cada serviço)
+*   **Nginx** (Proxy reverso para cada container)
+*   **Docker & Docker Compose** (Containerização)
+*   **Pest** (Framework de testes moderno)
 
 ---
 
 ## 🚀 Como executar o projeto
 
 ### Pré-requisitos
-
-* Docker instalado
-* Docker Compose
+*   Docker & Docker Compose
 
 ### Passos
 
-```bash
-git clone https://github.com/seu-usuario/laravel-event-driven-store.git
-cd laravel-event-driven-store
+1.  **Clonar e subir o ambiente:**
+    ```bash
+    git clone https://github.com/micaelsantiago/laravel-event-driven-store.git
+    cd laravel-event-driven-store
+    docker-compose up -d --build
+    ```
 
-docker-compose up --build
-```
+2.  **Popular o estoque inicial:**
+    O serviço de estoque precisa de produtos para processar os pedidos.
+    ```bash
+    docker-compose exec inventory-app php artisan db:seed --class=ProductSeeder
+    ```
 
 ---
 
-## 🔌 Endpoints principais
+## 🔌 Endpoints Principais
 
-### Order Service
+### Order Service (Criar Pedido)
+`POST http://localhost:8001/api/orders`
 
-```
-POST /orders
-```
-
-Exemplo de payload:
-
+**Payload:**
 ```json
 {
+  "customer_id": 1,
   "items": [
-    { "product_id": 1, "quantity": 2 }
+    { "product_id": 101, "quantity": 2, "price": 50.00 },
+    { "product_id": 102, "quantity": 1, "price": 100.00 }
   ]
+}
+```
+
+**Resposta Padronizada (JSON):**
+```json
+{
+  "status": "success",
+  "message": "Order created successfully",
+  "data": {
+    "order_id": "uuid-v4",
+    "status": "PENDING"
+  }
 }
 ```
 
 ---
 
-## 🧪 Testes
+## 🧪 Testes Automatizados
 
-O projeto pode ser testado utilizando:
+O projeto possui cobertura de testes para os fluxos de sucesso e falha (rollbacks).
 
-* Postman para requisições HTTP
-* Testes automatizados com Pest
-* Simulação de eventos entre serviços
+```bash
+# Testar Order Service
+docker-compose exec order-app ./vendor/bin/pest
 
----
+# Testar Inventory Service
+docker-compose exec inventory-app ./vendor/bin/pest
 
-## 📚 Conceitos aplicados
-
-* Arquitetura de microsserviços
-* Event-driven architecture
-* Comunicação assíncrona
-* Isolamento de serviços
-* Mensageria com filas
-* Containerização
+# Testar Payment Service
+docker-compose exec payment-app ./vendor/bin/pest
+```
 
 ---
 
-## 📈 Roadmap (melhorias futuras)
+## 📚 Conceitos Aplicados
 
-* Implementação de Dead Letter Queue (DLQ)
-* Retry automático de eventos
-* Idempotência no consumo de eventos
-* Observabilidade (logs centralizados)
-* Monitoramento de filas
-* Autenticação entre serviços
+*   **Saga Pattern (Choreography)**: Orquestração distribuída sem um ponto central de falha.
+*   **Database per Service**: Isolamento total de dados entre microsserviços.
+*   **API Response Standardization**: Trait global para consistência de payloads JSON.
+*   **Resiliência**: Configuração de offsets (`earliest`) para garantir o processamento de mensagens.
+*   **Clean Architecture (Planejado)**: Separação de camadas de domínio, aplicação e infraestrutura.
 
 ---
 
-## 📄 Documentação adicional
+## 📈 Roadmap (Melhorias Futuras)
 
-A pasta [`/docs`](./docs) contém:
+*   [ ] Implementação de Dead Letter Queue (DLQ)
+*   [ ] Retry automático com Backoff exponencial
+*   [ ] Painel visual Kafka UI
+*   [ ] Observabilidade com Jaeger (Tracing)
+*   [ ] Gateway de API Unificado
 
-*   [**Arquitetura**](./docs/architecture.md) (Diagramas e fluxo Saga)
+---
+
+## 📄 Documentação Técnica
+
+*   [**Arquitetura Detalhada**](./docs/architecture.md) (Diagramas Mermaid)
 *   [**Dicionário de Eventos**](./docs/events.md) (Contratos e Payloads)
-*   [**ADRs (Architecture Decision Records)**](./docs/adrs) (Registro de decisões técnicas: Kafka, Bancos Isolados, Padronização de API)
-
+*   [**ADRs**](./docs/adrs) (Registro de Decisões Técnicas)
