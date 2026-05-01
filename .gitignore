@@ -1,0 +1,24 @@
+# General
+.DS_Store
+.idea/
+.vscode/
+
+# Laravel
+**/vendor/
+**/.env
+**/.env.backup
+**/.env.production
+**/public/storage
+**/storage/*.key
+**/storage/framework/cache/data/*
+**/storage/framework/sessions/*
+**/storage/framework/testing/*
+**/storage/framework/views/*
+**/storage/logs/*
+**/node_modules/
+**/npm-debug.log
+**/yarn-error.log
+**/.phpunit.result.cache
+
+# Docker
+postgres-data/
