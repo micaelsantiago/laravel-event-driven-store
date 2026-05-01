@@ -25,7 +25,7 @@ O sistema é dividido em três microsserviços independentes, cada um com seu pr
 
 ## 🧱 Tecnologias Utilizadas
 
-*   **Laravel 11+** (PHP 8.3)
+*   **Laravel 13+** (PHP 8.3)
 *   **Apache Kafka** (Broker de eventos)
 *   **PostgreSQL** (Bancos de dados isolados para cada serviço)
 *   **Nginx** (Proxy reverso para cada container)
