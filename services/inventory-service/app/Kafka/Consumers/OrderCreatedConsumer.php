@@ -55,6 +55,7 @@ class OrderCreatedConsumer
 
             $reservation = Reservation::create([
                 'order_id' => $orderId,
+                'items' => $items,
                 'status' => 'RESERVED'
             ]);
 

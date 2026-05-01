@@ -43,6 +43,7 @@ it('reserves inventory and publishes inventory.reserved on success', function ()
     $this->assertDatabaseHas('reservations', [
         'order_id' => $orderId,
         'status' => 'RESERVED',
+        'items' => json_encode($payload['items']),
     ]);
 
     // Verify Kafka event

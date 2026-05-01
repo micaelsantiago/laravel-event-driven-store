@@ -12,6 +12,11 @@ class Reservation extends Model
 
     protected $fillable = [
         'order_id',
+        'items',
         'status',
+    ];
+
+    protected $casts = [
+        'items' => 'array',
     ];
 }
