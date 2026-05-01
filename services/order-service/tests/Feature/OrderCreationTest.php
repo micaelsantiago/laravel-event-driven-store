@@ -60,5 +60,11 @@ it('validates required fields during order creation', function () {
     $response = $this->postJson('/api/orders', []);
 
     $response->assertStatus(422)
-        ->assertJsonValidationErrors(['customer_id', 'items']);
+        ->assertJson([
+            'status' => 'error',
+            'message' => 'Validation failed.',
+        ])
+        ->assertJsonStructure([
+            'details' => ['customer_id', 'items']
+        ]);
 });
